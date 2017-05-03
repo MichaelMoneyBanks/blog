@@ -1,92 +1,119 @@
 import webapp2
-import cgi
-import jinja2
-import os
+import re
 
-# set up jinja
-template_dir = os.path.join(os.path.dirname(__file__), "templates")
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir))
+form = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Sign Up</title>
+</head>
+<body>
+    <h1>User Sign Up</h1>
+<h3>Please complete the following.</h3>
+<form method = "post">
+    <label>
+        Username:
+        <input type="text" name="username" value=%(username)s>
+        <p><div style='color: red'>%(username_error)s</div></p>
+    </label>
+    <br>
+    <label>
+        Password:
+        <input type="password" name="password" value=>
+        <p><div style='color: red'>%(password_error)s</div></p>
+    </label>
+    <br>
+    <label>
+        Confirm Password:
+        <input type="password" name="verify" value=>
+        <p><div style='color: red'>%(verify_error)s</div></p>
+    </label>
+    <br>
+    <label>
+        Email (Optional):
+        <input type="text" name="email" value=%(email)s>
+        <p><div style='color: red'>%(email_error)s</div><p>
+    </label>
+    <br>
+    <br>
+    <input type="submit" name="Submit">
+</form>
+</body>
+</html>
+"""
 
-# a list of movies that nobody should be allowed to watch
-terrible_movies = [
-    "Gigli",
-    "Star Wars Episode 1: Attack of the Clones",
-    "Paul Blart: Mall Cop 2",
-    "Nine Lives"
-]
+USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+def valid_username(username):
+    return username and USER_RE.match(username)
+
+PASS_RE = re.compile(r".{3,20}$")
+def valid_password(password):
+    return password and PASS_RE.match(password)
+
+EMAIL_RE = re.compile(r'^[\S]+@[\S]+\.+[\S]+$')
+def valid_email(email):
+    return not email or EMAIL_RE.match(email)
 
 
-def getCurrentWatchlist():
-    """ Returns the user's current watchlist """
 
-    # for now, we are just pretending
-    return [ "Star Wars", "Minions", "Freaky Friday", "My Favorite Martian" ]
+class MainHandler(webapp2.RequestHandler):
 
-
-class Index(webapp2.RequestHandler):
-    """ Handles requests coming in to '/' (the root of our site)
-        e.g. www.flicklist.com/
-    """
+    def write_form(self, username="", username_error="", password_error="", verify_error="", email="", email_error=""):
+        self.response.out.write(form % {"username":username, "username_error":username_error, "password_error":password_error, "verify_error":verify_error, "email":email, "email_error":email_error})
 
     def get(self):
-        t = jinja_env.get_template("edit.html")
-        error = cgi.escape(self.request.get("error"), quote=True)
-        content = t.render(watchlist=getCurrentWatchlist(), error=error)
-        self.response.write(content)
-
-class AddMovie(webapp2.RequestHandler):
-    """ Handles requests coming in to '/add'
-        e.g. www.flicklist.com/add
-    """
+        self.write_form()
 
     def post(self):
-        new_movie = self.request.get("new-movie")
 
-        # if the user typed nothing at all, redirect and yell at them
-        if (not new_movie) or (new_movie.strip() == ""):
-            error = "Please specify the movie you want to add."
-            self.redirect("/?error=" + error)
+        have_error = False
+        username = self.request.get('username')
+        password = self.request.get('password')
+        verify = self.request.get('verify')
+        email = self.request.get('email')
+        verify_error = ""
+        email_error = ""
+        password_error = ""
+        username_error = ""
 
-        # if the user wants to add a terrible movie, redirect and yell at them
-        if new_movie in terrible_movies:
-            error = "Trust me, you don't want to add '{0}' to your Watchlist.".format(new_movie)
-            self.redirect("/?error=" + error)
+        if not valid_username(username):
+            username_error = "That's not a valid username."
+            have_error = True
 
-        # TODO 1
-        t = jinja_env.get_template("add.html")
-        content = t.render(new_movie=new_movie)
-        self.response.write(content)
+        if not valid_password(password):
+            password_error = "That's not a valid password."
+            have_error = True
 
+        if password != verify:
+            verify_error = "Does not match password."
+            have_error = True
 
-class CrossOffMovie(webapp2.RequestHandler):
-    """ Handles requests coming in to '/cross-off'
-        e.g. www.flicklist.com/cross-off
-    """
+        if not valid_email(email):
+            email_error = "That's not a valid email."
+            have_error = True
 
-    def post(self):
-        crossed_off_movie = self.request.get("crossed-off-movie")
-
-        if not crossed_off_movie or crossed_off_movie.strip() == "":
-            error = "Please specify a movie to cross off."
-            self.redirect("/?error=" + error)
-
-        # if user tried to cross off a movie that is not in their list, reject
-        if not (crossed_off_movie in getCurrentWatchlist()):
-            # make a helpful error message
-            error = "'{0}' is not in your Watchlist, so you can't cross it off!".format(crossed_off_movie)
-
-            # redirect to homepage, and include error as a query parameter in the URL
-            self.redirect("/?error=" + error)
+        if have_error:
+            self.write_form(username, username_error, password_error, verify_error, email, email_error)
+        else:
+            self.redirect('/login?username=' + username)
 
 
-        # render confirmation page
-        t = jinja_env.get_template("cross-off.html")
-        content = t.render(crossed_off_movie=crossed_off_movie)
-        self.response.write(content)
+
+class Login(webapp2.RequestHandler):
+
+
+    def get(self):
+
+        username = self.request.get('username')
+
+        welcome ="""<p>Thanks you for registering %s!</p>""" % username
+
+        self.response.out.write(welcome)
+
+
 
 
 app = webapp2.WSGIApplication([
-    ('/', Index),
-    ('/add', AddMovie),
-    ('/cross-off', CrossOffMovie)
+    ('/', MainHandler),
+    ('/login', Login)
 ], debug=True)

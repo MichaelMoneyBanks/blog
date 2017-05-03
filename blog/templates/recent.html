@@ -1,0 +1,38 @@
+{% block content %}
+<html>
+<head>
+  <title>Blog</title>
+  <style type="text/css">
+      .hr {
+        margin: 20 px auto;
+      }
+      .post + .post {
+        margin-top: 20px
+      }
+      .post-title {
+        font-weight: bold;
+        font-size: 20px;
+      }
+      .post-body {
+        margin: 0;
+        font-size: 17px;
+      }
+  </style>
+</head>
+<body>
+<h1>
+    <a href="/">Blog</a>
+</h1>
+{% for post in posts %}
+  <div class = "post-title"><a href = "/blog/{{ post.p }}">{{ post.title }}</a></div>
+  <div class = "post-body">{{ post.posted }}</div>
+  <hr>
+  <pre class = "post-body">{{ post.post }}</pre>
+{% endfor %}
+</body>
+
+<footer>
+
+</footer>
+</html>
+{% endblock %}

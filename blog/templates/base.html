@@ -1,0 +1,75 @@
+<html>
+<head>
+  <title>Blog</title>
+  <style type="text/css">
+      .error {
+          color: red;
+      }
+      body {
+        font-family: sans-serif;
+        width: 800px;
+        padding: 10px;
+      }
+      label {
+        display: block;
+        font-size: 20px;
+      }
+      input[type=text] {
+        width: 400px;
+        font-size: 20px;
+        padding: 2px;
+      }
+      textarea {
+        width: 400px;
+        height: 200px;
+        font-size: 17px;
+        font-family: monospace;
+      }
+      input[type=submit] {
+        font-size: 24px;
+      }
+      hr {
+        margin: 20 px auto;
+      }
+      .post + .post {
+        margin-top: 20px
+      }
+      .post-title {
+        font-weight: bold;
+        font-size: 20px;
+      }
+      .post-body {
+        margin: 0;
+        font-size: 17px;
+      }
+  </style>
+</head>
+<body>
+
+  <h1>
+      <a href="/">Blog</a>
+  </h1>
+  <h3>Add New Post:</h3>
+
+  <form method="post">
+      <label>
+          <div>Title:</div>
+          <input type="text" name="title" value="{{title}}"/>
+      </label>
+      <br>
+      <label>
+          <div>Post:</div>
+          <textarea name="post">{{post}}</textarea>
+      </label>
+      <br>
+      <input type="submit" value="post"/>
+      <div class="error">{{error}}</div>
+
+  </form>
+
+</body>
+
+<footer>
+
+</footer>
+</html>
